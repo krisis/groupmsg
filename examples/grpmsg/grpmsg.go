@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"net"
 	"os"
 
@@ -13,7 +12,7 @@ import (
 func client(addrs ...string) {
 	g := groupmsg.NewGroup()
 	for _, addr := range addrs {
-		server, err := net.Dial("tcp", addr)
+		server, err := net.Dial("tcp", fmt.Sprintf("%s%s", "localhost", addr))
 		if err != nil {
 			fmt.Printf("failed to connect to %s\n", addr)
 			break
@@ -31,16 +30,15 @@ func client(addrs ...string) {
 }
 
 func handle(conn net.Conn) {
-	var msgbuf bytes.Buffer
+	buf := make([]byte, 1024)
 	var msg []byte
 
-	n, err := io.CopyN(&msgbuf, conn, 5)
+	n, err := conn.Read(buf)
 	if err != nil {
 		fmt.Printf("error while reading from %s\n", conn.RemoteAddr())
 	}
 	fmt.Println("read ", n, "bytes")
-	msg = msgbuf.Bytes()
-	msgbuf.Reset()
+	msg = buf[:n]
 
 	if bytes.Equal([]byte("Hello"), msg) {
 		fmt.Println("received: ", string(msg))

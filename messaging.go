@@ -1,9 +1,7 @@
 package groupmsg
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"net"
 )
 
@@ -34,17 +32,17 @@ func (g *Group) SendMsg(msg []byte) {
 }
 
 func (g *Group) RecvMsg() map[net.Conn][]byte {
-	var msg bytes.Buffer
+	msg := make([]byte, 1024)
 	replies := make(map[net.Conn][]byte)
 	for _, mem := range g.members {
-		n, err := io.Copy(&msg, mem)
+		n, err := mem.Read(msg)
 		fmt.Println("read ", n, "bytes")
 		if err != nil {
-			fmt.Printf("failed to copy from buffer\n")
+			fmt.Println(err)
 		}
-		fmt.Println("recvd from ", mem.RemoteAddr(), ": ", msg.Bytes())
-		replies[mem] = msg.Bytes()
-		msg.Reset()
+		fmt.Println("recvd from ", mem.RemoteAddr(), ": ", string(msg))
+		replies[mem] = msg[:n]
+
 	}
 	return replies
 }
