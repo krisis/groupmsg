@@ -14,13 +14,13 @@ func client(addrs ...string) {
 	for _, addr := range addrs {
 		server, err := net.Dial("tcp", fmt.Sprintf("%s%s", "localhost", addr))
 		if err != nil {
+			fmt.Println("failed to connect to ", addr, " : ", err)
 			fmt.Printf("failed to connect to %s\n", addr)
 			break
 		}
 		g.AddMember(server)
 	}
 
-	fmt.Println("Servers in group are: ", g.Members())
 	g.SendMsg([]byte("Hello"))
 	msgs := g.RecvMsg()
 
@@ -37,13 +37,13 @@ func handle(conn net.Conn) {
 	if err != nil {
 		fmt.Printf("error while reading from %s\n", conn.RemoteAddr())
 	}
-	fmt.Println("read ", n, "bytes")
 	msg = buf[:n]
 
 	if bytes.Equal([]byte("Hello"), msg) {
-		fmt.Println("received: ", string(msg))
-		n, _ := conn.Write([]byte("World"))
-		fmt.Println("server wrote ", n, " bytes")
+		_, err := conn.Write([]byte("World"))
+		if err != nil {
+			fmt.Println(err)
+		}
 
 	} else {
 		fmt.Println("Unknown message: ", string(msg))
